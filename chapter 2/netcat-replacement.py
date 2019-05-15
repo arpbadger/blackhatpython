@@ -3,7 +3,7 @@
 # import libraries
 import sys
 import socket
-import getop
+import getopt
 import threading
 import subprocess
 
@@ -20,7 +20,7 @@ port = 0
 
 # Usage command to show user proper syntax
 def usage():
-    print("BHP Net Tool\n\nUsage: netcat-replacement.py -t target_host -p port\n"
+    print("BHP Net Tool\n\nUsage: netcat-replacement.py -t target_host -p port\n")
     print("-l --listen                   -listen on [host]:[port] for incoming connections")
     print("-e --execute=file_to_run      -execute the given file upon receiving a connection")
     print("-c --command                  -initialize a command shell")
@@ -31,7 +31,7 @@ def usage():
     print("echo 'ABCDEFG' | ./netcat-replacement.py -t 192.168.56.5 -pm 135")
     sys.exit()
 
-def client_sender():
+def client_sender(buffer):
     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
     try:
@@ -89,7 +89,7 @@ def server_loop():
         client_thread = threading.Thread(target=client_handler, args=(client_socket,))
         client_thread.start()
 
-def run_command():
+def run_command(command):
 
     # trim the newline
     comand = command.rstrip()
@@ -103,8 +103,64 @@ def run_command():
     # send the output back to the client
     return(output)
 
+def client_handler(client_socket):
+    global upload
+    global execute
+    global command
 
+    # check for upload
+    if len(upload_destination):
 
+        # Read in all of the bytes and write out to our destination file buffer
+        file_buffer = ""
+
+        # keep reading data until none is available
+        while True:
+            data = client_socket.recv(1024)
+
+            if not data:
+                break
+            else:
+                file_buffer += data
+
+        try:
+            file_descriptor = open(upload_destination,"wb")
+            file_descriptor.write(file_buffer)
+            file_descriptor.close()
+
+            # awknowledge that we wrote the file out
+            client_socket.send("Successfully saved file to %s\r\n % upload_destination")
+
+        except:
+            client_socket.send("Failed to save file to %s\r\n % upload_destination")
+
+    # check for command execution
+    if len(execute):
+
+        # run the command
+        output = run_command(execute)
+        client_socket.send(output)
+
+    # now we go to another loop if a command shell was requested
+
+    if command:
+
+        while True:
+
+            # show a simple prompt
+            client_socket.send("<netcat-replacement:#> ")
+
+                # now we receive until we see a linefeed (enter key)
+
+            cmd_buffer = ""
+            while "\n" not in cmd_buffer:
+                cmd_buffer += client_socket.recv(1024)
+
+            # send back the command check_output
+            response = run_command(cmd_buffer)
+
+            # send back the response
+            client_socket.send(response)
 
 # main command to run script
 def main():
