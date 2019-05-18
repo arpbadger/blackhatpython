@@ -92,7 +92,7 @@ def server_loop():
 def run_command(command):
 
     # trim the newline
-    comand = command.rstrip()
+    command = command.rstrip()
 
     # run the command and get the output back
     try:
