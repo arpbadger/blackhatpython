@@ -16,9 +16,12 @@ target = ""
 upload_destination = ""
 port = 0
 
-# create main function responsible for handling command line arguments and calling the rest of the functions
+# create main function responsible for handling command line-
+# arguments and calling the rest of the functions
 
 # Usage command to show user proper syntax
+
+
 def usage():
     print("BHP Net Tool\n\nUsage: netcat-replacement.py -t target_host -p port\n")
     print("-l --listen                   -listen on [host]:[port] for incoming connections")
